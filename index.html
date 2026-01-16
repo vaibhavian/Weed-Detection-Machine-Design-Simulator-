@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weed Detection Design Simulator - Vaibhav Prasad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;700;900&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .blueprint-frame {
+            border: 3px solid #1e293b;
+            position: relative;
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        .title-block {
+            border-top: 3px solid #1e293b;
+            background: #fff;
+        }
+
+        .section-header {
+            background: #1e293b;
+            color: white;
+            padding: 6px 14px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        input[type="range"] {
+            accent-color: #2563eb;
+            height: 6px;
+            cursor: pointer;
+        }
+
+        #three-container {
+            width: 100%;
+            height: 520px;
+            background: radial-gradient(circle, #f8fafc 0%, #cbd5e1 100%);
+            cursor: move;
+            position: relative;
+        }
+
+        .formula-card {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            border-left: 4px solid #3b82f6;
+            margin-top: 4px;
+        }
+
+        .feasibility-ribbon {
+            transform: rotate(45deg);
+            position: absolute;
+            top: 22px;
+            right: -35px;
+            width: 160px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 0.65rem;
+            padding: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .metric-label {
+            font-size: 0.6rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+
+    <div class="max-w-7xl mx-auto blueprint-frame shadow-2xl overflow-hidden bg-white">
+        
+        <!-- Header / Updated Technical Title Block -->
+        <div class="grid grid-cols-1 md:grid-cols-12 title-block">
+            <div class="md:col-span-4 p-6 flex items-center border-b md:border-b-0 md:border-r-2 border-slate-900">
+                <div class="space-y-1">
+                    <h1 class="text-2xl font-black leading-none uppercase tracking-tighter">Weed Detection design simulator</h1>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Mechanical Engineering Department Project</p>
+                </div>
+            </div>
+            <div class="md:col-span-3 p-4 text-[10px] space-y-1 mono border-b md:border-b-0 md:border-r-2 border-slate-900">
+                <div class="flex justify-between"><span>Drawn By:</span> <b>vaibhav prasad</b></div>
+                <div class="flex justify-between"><span>College:</span> <b>D Y Patil College of Engineering</b></div>
+                <div class="flex justify-between"><span>Branch:</span> <b>Mechanical Department</b></div>
+            </div>
+            <div class="md:col-span-3 p-4 text-[10px] space-y-1 mono border-b md:border-b-0 md:border-r-2 border-slate-900">
+                <div class="flex justify-between"><span>Units:</span> <b>METRIC (mm)</b></div>
+                <div class="flex justify-between"><span>Chassis:</span> <b>AL-6061 2040</b></div>
+                <div class="flex justify-between"><span>Shafts:</span> <b>12mm STAINLESS</b></div>
+            </div>
+            <div class="md:col-span-2 p-4 flex flex-col justify-center items-center bg-slate-50 relative overflow-hidden">
+                <div id="feasibilityRibbon" class="feasibility-ribbon bg-green-500 text-white">FEASIBLE</div>
+                <span class="metric-label">Factor of Safety</span>
+                <span id="fosScore" class="text-2xl font-black text-slate-900">--</span>
+            </div>
+        </div>
+
+        <!-- Main Design Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 border-t-2 border-slate-900">
+            
+            <!-- Structural Sidebar -->
+            <div class="lg:col-span-4 border-r-2 border-slate-900 bg-white">
+                
+                <div class="section-header">Mechanical Parameters</div>
+                <div class="p-5 space-y-5">
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Frame Length (L)</label>
+                            <span id="lVal" class="text-blue-600 mono">1100mm</span>
+                        </div>
+                        <input type="range" id="lIn" min="800" max="1800" value="1100" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Track Width (W)</label>
+                            <span id="wVal" class="text-blue-600 mono">700mm</span>
+                        </div>
+                        <input type="range" id="wIn" min="500" max="1200" value="700" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Wheel Radius (R)</label>
+                            <span id="rVal" class="text-blue-600 mono">125mm</span>
+                        </div>
+                        <input type="range" id="rIn" min="80" max="300" value="125" class="w-full">
+                    </div>
+                </div>
+
+                <div class="section-header">Load & Dynamics</div>
+                <div class="p-5 space-y-5">
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Payload Mass</label>
+                            <span id="mVal" class="text-blue-600 mono">10kg</span>
+                        </div>
+                        <input type="range" id="mIn" min="0" max="150" value="10" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Design Speed (V)</label>
+                            <span id="vVal" class="text-blue-600 mono">1.0 m/s</span>
+                        </div>
+                        <input type="range" id="vIn" min="0.1" max="4.0" step="0.1" value="1.0" class="w-full">
+                    </div>
+                </div>
+
+                <div class="section-header">Physics Engine Output</div>
+                <div class="p-5 space-y-4 bg-slate-50 border-t border-slate-200">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                            <span>Tractive Torque (T)</span>
+                            <span id="tOut" class="text-green-600 font-bold">--</span>
+                        </div>
+                        <div class="formula-card mono text-[0.65rem]">T = (M * g * &mu; * R) / (4 * &eta;)</div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                            <span>Factor of Safety (FoS)</span>
+                            <span id="fosOut" class="text-blue-600 font-bold">--</span>
+                        </div>
+                        <div class="formula-card mono text-[0.65rem]">FoS = Rated Torque / Torque</div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                            <span>Angular Speed (RPM)</span>
+                            <span id="rpmOut" class="text-blue-600 font-bold">--</span>
+                        </div>
+                        <div class="formula-card mono text-[0.65rem]">RPM = (V * 60) / (2&pi; * R)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Main Area -->
+            <div class="lg:col-span-8 bg-white flex flex-col">
+                <div id="three-container">
+                    <!-- 3D Toggle Overlay -->
+                    <div class="absolute top-6 right-6 flex flex-col gap-2 z-20">
+                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
+                            <input type="checkbox" id="tPhone" checked class="w-3 h-3 text-blue-600"> PHONE STAND
+                        </label>
+                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
+                            <input type="checkbox" id="tDrill" checked class="w-3 h-3 text-blue-600"> CENTER DRILL
+                        </label>
+                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
+                            <input type="checkbox" id="tRods" checked class="w-3 h-3 text-blue-600"> TRANSMISSION
+                        </label>
+                    </div>
+                    <div class="absolute bottom-4 left-6 pointer-events-none text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        Rotate: Drag Mouse | Zoom: Scroll | Analysis: Active
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="mt-auto grid grid-cols-1 md:grid-cols-2 border-t-2 border-slate-900 divide-x-2 divide-slate-900 bg-white">
+                    <div class="p-4">
+                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Structural Assembly (BOM)</h3>
+                        <div id="cutList" class="text-[11px] mono space-y-1 text-slate-700">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+                    <div class="p-4 bg-slate-50">
+                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Rotor Load Analysis</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between text-[11px] font-black uppercase">
+                                <span>Rotor Power Demand</span>
+                                <span id="pOut" class="text-blue-600 font-bold">--</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden border border-slate-300">
+                                <div id="pBar" class="bg-blue-600 h-full transition-all duration-300" style="width: 20%"></div>
+                            </div>
+                            <p class="text-[9px] font-medium text-slate-500">
+                                <i class="fas fa-info-circle mr-1"></i> Mast connected to Front Rail. Nominal Motor Rating: 8.0 Nm.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D ENGINE ---
+        let scene, camera, renderer, machine;
+        let cLong1, cLong2, cCrossF, cCrossR, cCrossM, tray;
+        let wMesh = [], rMesh = [], mBox = [], wHubs = [];
+        let pStand, drill;
+        
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+
+        function init() {
+            const container = document.getElementById('three-container');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf1f5f9);
+
+            camera = new THREE.PerspectiveCamera(35, w / h, 1, 30000);
+            camera.position.set(2000, 1200, 2000);
+            camera.lookAt(0, 200, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
+            
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(1000, 2500, 1000);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            scene.add(sun);
+
+            const grid = new THREE.GridHelper(4000, 40, 0x94a3b8, 0xd1d5db);
+            scene.add(grid);
+
+            machine = new THREE.Group();
+            scene.add(machine);
+
+            const alumMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.1 });
+            const rubberMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+            const motorMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 });
+            const warnMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 });
+            const hubMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.5, roughness: 0.2 });
+
+            const railGeo = new THREE.BoxGeometry(1, 1, 1);
+            cLong1 = new THREE.Mesh(railGeo, alumMat);
+            cLong2 = new THREE.Mesh(railGeo, alumMat);
+            cCrossF = new THREE.Mesh(railGeo, alumMat);
+            cCrossR = new THREE.Mesh(railGeo, alumMat);
+            cCrossM = new THREE.Mesh(railGeo, alumMat);
+            tray = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 1), new THREE.MeshStandardMaterial({color:0x64748b, transparent:true, opacity:0.6}));
+            
+            [cLong1, cLong2, cCrossF, cCrossR, cCrossM, tray].forEach(m => {
+                m.castShadow = true;
+                m.receiveShadow = true;
+                machine.add(m);
+            });
+
+            const cyl = new THREE.CylinderGeometry(1, 1, 1, 64);
+            for(let i=0; i<4; i++) {
+                const w = new THREE.Mesh(cyl, rubberMat);
+                w.rotation.z = Math.PI / 2;
+                w.castShadow = true;
+                wMesh.push(w);
+                machine.add(w);
+
+                const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.1, 32), hubMat);
+                hub.rotation.z = Math.PI / 2;
+                wHubs.push(hub);
+                machine.add(hub);
+
+                const r = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 1, 16), alumMat);
+                r.rotation.z = Math.PI / 2;
+                r.castShadow = true;
+                rMesh.push(r);
+                machine.add(r);
+
+                const m = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), motorMat);
+                m.castShadow = true;
+                mBox.push(m);
+                machine.add(m);
+            }
+
+            pStand = new THREE.Group();
+            const pMast = new THREE.Mesh(new THREE.BoxGeometry(20, 450, 20), alumMat);
+            pMast.position.y = 225;
+            const pClip = new THREE.Mesh(new THREE.BoxGeometry(100, 180, 25), rubberMat);
+            pClip.position.y = 450;
+            pStand.add(pMast, pClip);
+            machine.add(pStand);
+
+            drill = new THREE.Group();
+            const dBody = new THREE.Mesh(new THREE.CylinderGeometry(50, 50, 100, 32), motorMat);
+            const dBit = new THREE.Mesh(new THREE.ConeGeometry(40, 160, 12), warnMat);
+            dBit.position.y = -130;
+            drill.add(dBody, dBit);
+            machine.add(drill);
+
+            container.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.offsetX, y: e.offsetY }; });
+            window.addEventListener('mouseup', () => isDragging = false);
+            container.addEventListener('mousemove', e => {
+                if(isDragging) {
+                    machine.rotation.y += (e.offsetX - prevMouse.x) * 0.01;
+                    machine.rotation.x = Math.max(-0.6, Math.min(0.6, machine.rotation.x + (e.offsetY - prevMouse.y) * 0.01));
+                }
+                prevMouse = { x: e.offsetX, y: e.offsetY };
+            });
+            container.addEventListener('wheel', e => { 
+                e.preventDefault(); 
+                camera.position.multiplyScalar(e.deltaY > 0 ? 1.05 : 0.95); 
+            }, { passive: false });
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(drill && drill.visible) drill.children[1].rotation.y += 0.25;
+            renderer.render(scene, camera);
+        }
+
+        function update() {
+            const lIn = document.getElementById('lIn');
+            const wIn = document.getElementById('wIn');
+            const rIn = document.getElementById('rIn');
+            const mIn = document.getElementById('mIn');
+            const vIn = document.getElementById('vIn');
+
+            if (!lIn || !wIn || !rIn || !mIn || !vIn) return;
+
+            const L = parseInt(lIn.value);
+            const W = parseInt(wIn.value);
+            const R = parseInt(rIn.value);
+            const M = parseInt(mIn.value);
+            const V = parseFloat(vIn.value);
+
+            document.getElementById('lVal').innerText = L + "mm";
+            document.getElementById('wVal').innerText = W + "mm";
+            document.getElementById('rVal').innerText = R + "mm";
+            document.getElementById('mVal').innerText = M + "kg";
+            document.getElementById('vVal').innerText = V.toFixed(1) + " m/s";
+
+            const tDrill = document.getElementById('tDrill');
+            const totalMass = 25 + M + (tDrill && tDrill.checked ? 10 : 0);
+            const g = 9.81, mu = 0.12, eta = 0.85;
+            const torque = (totalMass * g * mu * (R/1000)) / (4 * eta);
+            const rpm = (V * 60) / (2 * Math.PI * (R/1000));
+            const power = torque * (2 * Math.PI * rpm / 60);
+            
+            const ratedTorque = 8.0; 
+            const fos = ratedTorque / torque;
+
+            document.getElementById('tOut').innerText = torque.toFixed(2) + " Nm";
+            document.getElementById('rpmOut').innerText = rpm.toFixed(1) + " RPM";
+            document.getElementById('pOut').innerText = power.toFixed(1) + " W/Mot";
+            document.getElementById('pBar').style.width = Math.min((power/120)*100, 100) + "%";
+            
+            const fosScore = document.getElementById('fosScore');
+            const fosOut = document.getElementById('fosOut');
+            if (fosOut) fosOut.innerText = fos.toFixed(2);
+            if (fosScore) fosScore.innerText = fos.toFixed(1);
+            
+            const rib = document.getElementById('feasibilityRibbon');
+            if(fos < 1.0) {
+                rib.innerText = "FAILED";
+                rib.className = "feasibility-ribbon bg-red-600 text-white";
+                if (fosScore) fosScore.style.color = "#dc2626";
+            } else if (fos < 1.5) {
+                rib.innerText = "CRITICAL";
+                rib.className = "feasibility-ribbon bg-amber-500 text-white";
+                if (fosScore) fosScore.style.color = "#d97706";
+            } else {
+                rib.innerText = "FEASIBLE";
+                rib.className = "feasibility-ribbon bg-green-500 text-white";
+                if (fosScore) fosScore.style.color = "#15803d";
+            }
+
+            document.getElementById('cutList').innerHTML = `
+                <div>&bull; 2040 Profile: 2x ${L}mm (Main)</div>
+                <div>&bull; 2040 Profile: 3x ${W}mm (Cross)</div>
+                <div>&bull; Drive Rods: 4x 120mm Stainless</div>
+                <div>&bull; Total Alloy Length: ${(L*2 + W*3)/1000}m</div>
+            `;
+
+            draw(L, W, R);
+        }
+
+        function draw(L, W, R) {
+            if(!machine) return;
+            const prof = 40;
+            const h = R;
+
+            cLong1.scale.set(prof, prof, L);
+            cLong1.position.set(-W/2, h, 0);
+            cLong2.scale.set(prof, prof, L);
+            cLong2.position.set(W/2, h, 0);
+            
+            cCrossF.scale.set(W, prof, prof);
+            cCrossF.position.set(0, h, -L/2 + prof/2);
+            cCrossR.scale.set(W, prof, prof);
+            cCrossR.position.set(0, h, L/2 - prof/2);
+            cCrossM.scale.set(W, prof, prof);
+            cCrossM.position.set(0, h, 0);
+
+            tray.scale.set(W - 20, 1, L/2);
+            tray.position.set(0, h - prof/2, L/4);
+
+            const gap = 120;
+            const wheelX = W/2 + gap;
+            const wheelZ = [-L/2 + 200, -L/2 + 200, L/2 - 200, L/2 - 200];
+            const sides = [-wheelX, wheelX, -wheelX, wheelX];
+
+            const tireWidth = 80;
+
+            wMesh.forEach((w, i) => {
+                w.scale.set(R, tireWidth, R); 
+                w.position.set(sides[i], R, wheelZ[i]);
+            });
+
+            wHubs.forEach((hub, i) => {
+                hub.scale.set(R * 0.4, tireWidth * 1.1, R * 0.4);
+                hub.position.set(sides[i], R, wheelZ[i]);
+            });
+
+            const tRods = document.getElementById('tRods');
+            rMesh.forEach((r, i) => {
+                r.visible = tRods && tRods.checked;
+                r.scale.set(1, gap - 40, 1);
+                const sX = sides[i] < 0 ? -(W/2 + gap/2) : (W/2 + gap/2);
+                r.position.set(sX, R, wheelZ[i]);
+            });
+
+            mBox.forEach((m, i) => {
+                m.position.set(sides[i] < 0 ? -W/2 : W/2, R, wheelZ[i]);
+            });
+
+            const tPhone = document.getElementById('tPhone');
+            pStand.visible = tPhone && tPhone.checked;
+            pStand.position.set(0, h + prof/2, -L/2 + prof/2);
+
+            const tDrill = document.getElementById('tDrill');
+            drill.visible = tDrill && tDrill.checked;
+            drill.position.set(0, h - 50, 0);
+        }
+
+        window.onload = () => {
+            init();
+            ['lIn', 'wIn', 'rIn', 'mIn', 'vIn', 'tPhone', 'tDrill', 'tRods'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', update);
+            });
+            update();
+        };
+    </script>
+</body>
+</html>
