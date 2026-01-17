@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weed Detection Design Simulator - Vaibhav Prasad</title>
+    <title>Weed Detection Design Simulator - CAE Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;700;900&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; overflow-x: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
         .blueprint-frame {
@@ -52,10 +52,10 @@
         .formula-card {
             background: #0f172a;
             color: #94a3b8;
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
-            font-size: 0.7rem;
-            border-left: 4px solid #3b82f6;
+            font-size: 0.65rem;
+            border-left: 3px solid #3b82f6;
             margin-top: 4px;
         }
 
@@ -73,11 +73,24 @@
             z-index: 10;
         }
 
-        .metric-label {
-            font-size: 0.6rem;
-            color: #64748b;
-            text-transform: uppercase;
-            font-weight: 800;
+        .cae-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            display: none;
+            width: 120px;
+        }
+
+        .legend-bar {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(to right, #2563eb, #00ffff, #00ff00, #ffff00, #ff0000);
+            border: 1px solid #000;
         }
     </style>
 </head>
@@ -85,12 +98,12 @@
 
     <div class="max-w-7xl mx-auto blueprint-frame shadow-2xl overflow-hidden bg-white">
         
-        <!-- Header / Updated Technical Title Block -->
+        <!-- Technical Title Block -->
         <div class="grid grid-cols-1 md:grid-cols-12 title-block">
             <div class="md:col-span-4 p-6 flex items-center border-b md:border-b-0 md:border-r-2 border-slate-900">
                 <div class="space-y-1">
-                    <h1 class="text-2xl font-black leading-none uppercase tracking-tighter">Weed Detection design simulator</h1>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase">Mechanical Engineering Department Project</p>
+                    <h1 class="text-xl font-black leading-none uppercase tracking-tighter">Weed Detection design simulator</h1>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase">Mechanical Engineering Department Project</p>
                 </div>
             </div>
             <div class="md:col-span-3 p-4 text-[10px] space-y-1 mono border-b md:border-b-0 md:border-r-2 border-slate-900">
@@ -99,133 +112,147 @@
                 <div class="flex justify-between"><span>Branch:</span> <b>Mechanical Department</b></div>
             </div>
             <div class="md:col-span-3 p-4 text-[10px] space-y-1 mono border-b md:border-b-0 md:border-r-2 border-slate-900">
-                <div class="flex justify-between"><span>Units:</span> <b>METRIC (mm)</b></div>
-                <div class="flex justify-between"><span>Chassis:</span> <b>AL-6061 2040</b></div>
-                <div class="flex justify-between"><span>Shafts:</span> <b>12mm STAINLESS</b></div>
+                <div class="flex justify-between"><span>Material:</span> <b>AL-6061-T6 2040</b></div>
+                <div class="flex justify-between"><span>Solver:</span> <b>Dynamic P-Vector CAE</b></div>
+                <div class="flex justify-between"><span>Offsets:</span> <b id="offsetReadout">0, 0</b> mm</div>
             </div>
             <div class="md:col-span-2 p-4 flex flex-col justify-center items-center bg-slate-50 relative overflow-hidden">
-                <div id="feasibilityRibbon" class="feasibility-ribbon bg-green-500 text-white">FEASIBLE</div>
-                <span class="metric-label">Factor of Safety</span>
-                <span id="fosScore" class="text-2xl font-black text-slate-900">--</span>
+                <div id="feasibilityRibbon" class="feasibility-ribbon bg-green-500 text-white">OPTIMIZED</div>
+                <span class="text-[0.6rem] font-bold uppercase text-slate-400">Peak Stress</span>
+                <span id="peakStressVal" class="text-2xl font-black text-slate-900">--</span>
             </div>
         </div>
 
-        <!-- Main Design Workspace -->
         <div class="grid grid-cols-1 lg:grid-cols-12 border-t-2 border-slate-900">
             
-            <!-- Structural Sidebar -->
+            <!-- Controls Sidebar -->
             <div class="lg:col-span-4 border-r-2 border-slate-900 bg-white">
                 
-                <div class="section-header">Mechanical Parameters</div>
-                <div class="p-5 space-y-5">
+                <div class="section-header">Physical Configuration</div>
+                <div class="p-5 space-y-4 border-b border-slate-100">
                     <div>
                         <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
                             <label>Frame Length (L)</label>
                             <span id="lVal" class="text-blue-600 mono">1100mm</span>
                         </div>
-                        <input type="range" id="lIn" min="800" max="1800" value="1100" class="w-full">
+                        <input type="range" id="lIn" min="800" max="2500" value="1100" class="w-full">
                     </div>
                     <div>
                         <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
                             <label>Track Width (W)</label>
                             <span id="wVal" class="text-blue-600 mono">700mm</span>
                         </div>
-                        <input type="range" id="wIn" min="500" max="1200" value="700" class="w-full">
+                        <input type="range" id="wIn" min="500" max="1500" value="700" class="w-full">
                     </div>
                     <div>
                         <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
                             <label>Wheel Radius (R)</label>
-                            <span id="rVal" class="text-blue-600 mono">125mm</span>
+                            <span id="rVal" class="text-blue-600 mono">250mm</span>
                         </div>
-                        <input type="range" id="rIn" min="80" max="300" value="125" class="w-full">
+                        <input type="range" id="rIn" min="150" max="500" value="250" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Height Offset (O)</label>
+                            <span id="hoVal" class="text-blue-600 mono">0mm</span>
+                        </div>
+                        <input type="range" id="hoIn" min="-100" max="400" value="0" class="w-full">
                     </div>
                 </div>
 
-                <div class="section-header">Load & Dynamics</div>
-                <div class="p-5 space-y-5">
+                <div class="section-header">Load Point & Payload</div>
+                <div class="p-5 space-y-4 bg-slate-50/50 border-b border-slate-100">
                     <div>
                         <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
                             <label>Payload Mass</label>
-                            <span id="mVal" class="text-blue-600 mono">10kg</span>
+                            <span id="mVal" class="text-blue-600 mono">50kg</span>
                         </div>
-                        <input type="range" id="mIn" min="0" max="150" value="10" class="w-full">
+                        <input type="range" id="mIn" min="0" max="500" value="50" class="w-full">
                     </div>
                     <div>
                         <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
-                            <label>Design Speed (V)</label>
-                            <span id="vVal" class="text-blue-600 mono">1.0 m/s</span>
+                            <label>Load X-Offset</label>
+                            <span id="lxVal" class="text-blue-600 mono">0mm</span>
                         </div>
-                        <input type="range" id="vIn" min="0.1" max="4.0" step="0.1" value="1.0" class="w-full">
+                        <input type="range" id="lxIn" min="-300" max="300" value="0" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-black mb-1 uppercase text-slate-600">
+                            <label>Load Z-Offset</label>
+                            <span id="lzVal" class="text-blue-600 mono">0mm</span>
+                        </div>
+                        <input type="range" id="lzIn" min="-400" max="400" value="0" class="w-full">
                     </div>
                 </div>
 
-                <div class="section-header">Physics Engine Output</div>
+                <div class="section-header">CAE Structural Analytics</div>
                 <div class="p-5 space-y-4 bg-slate-50 border-t border-slate-200">
                     <div class="space-y-1">
                         <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
-                            <span>Tractive Torque (T)</span>
-                            <span id="tOut" class="text-green-600 font-bold">--</span>
+                            <span>Max Bending Stress (&sigma;)</span>
+                            <span id="stressDisplay" class="text-blue-600 font-bold">-- MPa</span>
                         </div>
-                        <div class="formula-card mono text-[0.65rem]">T = (M * g * &mu; * R) / (4 * &eta;)</div>
+                        <div class="formula-card mono">&sigma; = (M_offset * c) / I</div>
                     </div>
                     <div class="space-y-1">
                         <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
-                            <span>Factor of Safety (FoS)</span>
-                            <span id="fosOut" class="text-blue-600 font-bold">--</span>
+                            <span>Stability Index</span>
+                            <span id="stabilityDisplay" class="text-green-600 font-bold">--</span>
                         </div>
-                        <div class="formula-card mono text-[0.65rem]">FoS = Rated Torque / Torque</div>
+                        <div class="formula-card mono">CoG_h = R + O + Lever_y</div>
                     </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] font-black uppercase text-slate-500">
-                            <span>Angular Speed (RPM)</span>
-                            <span id="rpmOut" class="text-blue-600 font-bold">--</span>
-                        </div>
-                        <div class="formula-card mono text-[0.65rem]">RPM = (V * 60) / (2&pi; * R)</div>
-                    </div>
+                </div>
+
+                <div class="p-5">
+                    <label class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-all">
+                        <input type="checkbox" id="enableCAE" class="w-5 h-5 accent-blue-600">
+                        <span class="text-xs font-black text-blue-700 uppercase tracking-tight">Enable Structural CAE Mode</span>
+                    </label>
                 </div>
             </div>
 
-            <!-- Visualization Main Area -->
-            <div class="lg:col-span-8 bg-white flex flex-col">
+            <!-- Visualization Area -->
+            <div class="lg:col-span-8 bg-white flex flex-col relative">
                 <div id="three-container">
-                    <!-- 3D Toggle Overlay -->
-                    <div class="absolute top-6 right-6 flex flex-col gap-2 z-20">
-                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
-                            <input type="checkbox" id="tPhone" checked class="w-3 h-3 text-blue-600"> PHONE STAND
-                        </label>
-                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
-                            <input type="checkbox" id="tDrill" checked class="w-3 h-3 text-blue-600"> CENTER DRILL
-                        </label>
-                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-md shadow-md border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-white transition-all">
-                            <input type="checkbox" id="tRods" checked class="w-3 h-3 text-blue-600"> TRANSMISSION
-                        </label>
+                    <!-- Legend -->
+                    <div id="caeLegend" class="cae-legend z-20 shadow-lg">
+                        <div class="font-bold mb-1 border-b pb-1 text-center text-[10px]">Stress (MPa)</div>
+                        <div class="legend-bar mb-1"></div>
+                        <div class="flex justify-between mono">
+                            <span>0</span>
+                            <span id="maxLegendVal">240</span>
+                        </div>
                     </div>
+                    
                     <div class="absolute bottom-4 left-6 pointer-events-none text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                        Rotate: Drag Mouse | Zoom: Scroll | Analysis: Active
+                        Rotate: Drag Mouse | Zoom: Scroll | Analysis: Responsive
+                    </div>
+
+                    <!-- Module Toggles -->
+                    <div class="absolute top-6 right-6 flex flex-col gap-2 z-20">
+                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded shadow border text-[9px] font-black cursor-pointer hover:bg-white transition-colors">
+                            <input type="checkbox" id="tDrill" checked> ACTUATOR
+                        </label>
+                        <label class="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded shadow border text-[9px] font-black cursor-pointer hover:bg-white transition-colors">
+                            <input type="checkbox" id="tPhone" checked> SENSOR MAST
+                        </label>
                     </div>
                 </div>
 
-                <!-- Footer Stats -->
+                <!-- Footer Summary -->
                 <div class="mt-auto grid grid-cols-1 md:grid-cols-2 border-t-2 border-slate-900 divide-x-2 divide-slate-900 bg-white">
                     <div class="p-4">
-                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Structural Assembly (BOM)</h3>
-                        <div id="cutList" class="text-[11px] mono space-y-1 text-slate-700">
-                            <!-- Injected -->
+                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Mechanical Configuration</h3>
+                        <div class="text-[11px] mono space-y-1 text-slate-700">
+                            <div>• <span class="text-blue-600 font-bold">Chassis:</span> Reinforced T-Slot Aluminum</div>
+                            <div>• <span class="text-black font-bold">Transmission:</span> 60mm Dynamic Slant Axles</div>
+                            <div>• <span class="text-orange-600 font-bold">Analysis:</span> Real-Time FEA Proxy Solver</div>
                         </div>
                     </div>
                     <div class="p-4 bg-slate-50">
-                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Rotor Load Analysis</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between text-[11px] font-black uppercase">
-                                <span>Rotor Power Demand</span>
-                                <span id="pOut" class="text-blue-600 font-bold">--</span>
-                            </div>
-                            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden border border-slate-300">
-                                <div id="pBar" class="bg-blue-600 h-full transition-all duration-300" style="width: 20%"></div>
-                            </div>
-                            <p class="text-[9px] font-medium text-slate-500">
-                                <i class="fas fa-info-circle mr-1"></i> Mast connected to Front Rail. Nominal Motor Rating: 8.0 Nm.
-                            </p>
+                        <h3 class="text-[10px] font-black uppercase mb-2 text-slate-400">Simulation Status</h3>
+                        <div id="caeStatusText" class="text-[11px] font-bold text-slate-500 uppercase italic">
+                            Engine online. All 3D meshes rendered.
                         </div>
                     </div>
                 </div>
@@ -234,10 +261,15 @@
     </div>
 
     <script>
-        // --- 3D ENGINE ---
+        // --- CORE PARAMETERS ---
+        const AL_YOUNGS_MODULUS = 69000; // MPa
+        const AL_YIELD_STRENGTH = 240; // MPa
+        const PROFILE_I = 48000; // Area Moment of Inertia mm^4
+        const PROFILE_C = 20; // Fiber distance mm
+
         let scene, camera, renderer, machine;
-        let cLong1, cLong2, cCrossF, cCrossR, cCrossM, tray;
-        let wMesh = [], rMesh = [], mBox = [], wHubs = [];
+        let cLong1, cLong2, cLongCenter, cCrossF, cCrossR, cCrossM;
+        let wheels = [], shaftMeshes = [], motorBoxes = [], forceArrows = [];
         let pStand, drill;
         
         let isDragging = false;
@@ -251,9 +283,9 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xf1f5f9);
 
-            camera = new THREE.PerspectiveCamera(35, w / h, 1, 30000);
-            camera.position.set(2000, 1200, 2000);
-            camera.lookAt(0, 200, 0);
+            camera = new THREE.PerspectiveCamera(38, w / h, 1, 100000);
+            camera.position.set(2200, 1200, 2200);
+            camera.lookAt(0, 300, 0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(w, h);
@@ -261,88 +293,89 @@
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
-            
-            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-            sun.position.set(1000, 2500, 1000);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+            sun.position.set(1000, 2000, 1000);
             sun.castShadow = true;
             sun.shadow.mapSize.width = 2048;
-            sun.shadow.mapSize.height = 2048;
             scene.add(sun);
 
-            const grid = new THREE.GridHelper(4000, 40, 0x94a3b8, 0xd1d5db);
-            scene.add(grid);
+            scene.add(new THREE.GridHelper(5000, 50, 0x94a3b8, 0xe2e8f0));
 
             machine = new THREE.Group();
             scene.add(machine);
 
-            const alumMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.1 });
-            const rubberMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
-            const motorMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 });
-            const warnMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 });
-            const hubMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.5, roughness: 0.2 });
-
-            const railGeo = new THREE.BoxGeometry(1, 1, 1);
-            cLong1 = new THREE.Mesh(railGeo, alumMat);
-            cLong2 = new THREE.Mesh(railGeo, alumMat);
-            cCrossF = new THREE.Mesh(railGeo, alumMat);
-            cCrossR = new THREE.Mesh(railGeo, alumMat);
-            cCrossM = new THREE.Mesh(railGeo, alumMat);
-            tray = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 1), new THREE.MeshStandardMaterial({color:0x64748b, transparent:true, opacity:0.6}));
+            // Frame Rail Subdivided Geometry
+            const railGeo = new THREE.BoxGeometry(1, 1, 1, 1, 1, 60); 
+            const blueMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.6, roughness: 0.3 });
             
-            [cLong1, cLong2, cCrossF, cCrossR, cCrossM, tray].forEach(m => {
+            cLong1 = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            cLong2 = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            cLongCenter = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            cCrossF = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            cCrossR = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            cCrossM = new THREE.Mesh(railGeo.clone(), blueMat.clone());
+            
+            [cLong1, cLong2, cLongCenter, cCrossF, cCrossR, cCrossM].forEach(m => {
                 m.castShadow = true;
                 m.receiveShadow = true;
                 machine.add(m);
             });
 
-            const cyl = new THREE.CylinderGeometry(1, 1, 1, 64);
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 1 });
+            const alumMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 });
+            const motorMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 });
+
             for(let i=0; i<4; i++) {
-                const w = new THREE.Mesh(cyl, rubberMat);
-                w.rotation.z = Math.PI / 2;
-                w.castShadow = true;
-                wMesh.push(w);
-                machine.add(w);
+                // Wheel Assembly
+                const wheelGroup = new THREE.Group();
+                const tire = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 64), blackMat);
+                tire.rotation.z = Math.PI/2;
+                wheelGroup.add(tire);
+                
+                // Agriculture Spokes
+                for(let j=0; j<8; j++) {
+                    const spoke = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.05, 0.05), blackMat);
+                    spoke.rotation.x = (j/8) * Math.PI;
+                    wheelGroup.add(spoke);
+                }
+                wheels.push(wheelGroup);
+                machine.add(wheelGroup);
 
-                const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.1, 32), hubMat);
-                hub.rotation.z = Math.PI / 2;
-                wHubs.push(hub);
-                machine.add(hub);
+                // Axle Rod (Reduced to 60mm later)
+                const axle = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 1, 16), alumMat);
+                axle.rotation.z = Math.PI/2;
+                shaftMeshes.push(axle);
+                machine.add(axle);
 
-                const r = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 1, 16), alumMat);
-                r.rotation.z = Math.PI / 2;
-                r.castShadow = true;
-                rMesh.push(r);
-                machine.add(r);
-
-                const m = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), motorMat);
-                m.castShadow = true;
-                mBox.push(m);
-                machine.add(m);
+                // Motor Case
+                const mBox = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), motorMat);
+                motorBoxes.push(mBox);
+                machine.add(mBox);
             }
 
-            pStand = new THREE.Group();
-            const pMast = new THREE.Mesh(new THREE.BoxGeometry(20, 450, 20), alumMat);
-            pMast.position.y = 225;
-            const pClip = new THREE.Mesh(new THREE.BoxGeometry(100, 180, 25), rubberMat);
-            pClip.position.y = 450;
-            pStand.add(pMast, pClip);
+            pStand = new THREE.Mesh(new THREE.BoxGeometry(25, 600, 25), alumMat);
             machine.add(pStand);
 
             drill = new THREE.Group();
-            const dBody = new THREE.Mesh(new THREE.CylinderGeometry(50, 50, 100, 32), motorMat);
-            const dBit = new THREE.Mesh(new THREE.ConeGeometry(40, 160, 12), warnMat);
-            dBit.position.y = -130;
+            const dBody = new THREE.Mesh(new THREE.CylinderGeometry(40, 40, 120, 16), motorMat);
+            const dBit = new THREE.Mesh(new THREE.CylinderGeometry(5, 40, 150, 16), new THREE.MeshStandardMaterial({color: 0xf59e0b}));
+            dBit.position.y = -80;
             drill.add(dBody, dBit);
             machine.add(drill);
+
+            const arrowGeo = new THREE.ConeGeometry(40, 150, 8);
+            const arr = new THREE.Mesh(arrowGeo, new THREE.MeshBasicMaterial({color: 0xffaa00}));
+            arr.visible = false;
+            forceArrows.push(arr);
+            machine.add(arr);
 
             container.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.offsetX, y: e.offsetY }; });
             window.addEventListener('mouseup', () => isDragging = false);
             container.addEventListener('mousemove', e => {
                 if(isDragging) {
                     machine.rotation.y += (e.offsetX - prevMouse.x) * 0.01;
-                    machine.rotation.x = Math.max(-0.6, Math.min(0.6, machine.rotation.x + (e.offsetY - prevMouse.y) * 0.01));
+                    machine.rotation.x = Math.max(-0.8, Math.min(0.8, machine.rotation.x + (e.offsetY - prevMouse.y) * 0.01));
                 }
                 prevMouse = { x: e.offsetX, y: e.offsetY };
             });
@@ -356,141 +389,159 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            if(drill && drill.visible) drill.children[1].rotation.y += 0.25;
             renderer.render(scene, camera);
         }
 
-        function update() {
-            const lIn = document.getElementById('lIn');
-            const wIn = document.getElementById('wIn');
-            const rIn = document.getElementById('rIn');
-            const mIn = document.getElementById('mIn');
-            const vIn = document.getElementById('vIn');
+        function getColorFromStress(val, max) {
+            if (max === 0) return new THREE.Color(0x2563eb);
+            const ratio = Math.min(val / max, 1);
+            const color = new THREE.Color(0x2563eb);
+            if (ratio < 0.2) color.lerp(new THREE.Color(0x00ffff), ratio * 5);
+            else if (ratio < 0.4) color.set(0x00ffff).lerp(new THREE.Color(0x00ff00), (ratio - 0.2) * 5);
+            else if (ratio < 0.6) color.set(0x00ff00).lerp(new THREE.Color(0xffff00), (ratio - 0.4) * 5);
+            else if (ratio < 0.8) color.set(0xffff00).lerp(new THREE.Color(0xff7700), (ratio - 0.6) * 5);
+            else color.set(0xff7700).lerp(new THREE.Color(0xff0000), (ratio - 0.8) * 5);
+            return color;
+        }
 
-            if (!lIn || !wIn || !rIn || !mIn || !vIn) return;
-
-            const L = parseInt(lIn.value);
-            const W = parseInt(wIn.value);
-            const R = parseInt(rIn.value);
-            const M = parseInt(mIn.value);
-            const V = parseFloat(vIn.value);
+        function updateAnalysis() {
+            const L = parseInt(document.getElementById('lIn').value);
+            const W = parseInt(document.getElementById('wIn').value);
+            const R = parseInt(document.getElementById('rIn').value);
+            const Offset = parseInt(document.getElementById('hoIn').value);
+            const M_kg = parseInt(document.getElementById('mIn').value);
+            const offX = parseInt(document.getElementById('lxIn').value);
+            const offZ = parseInt(document.getElementById('lzIn').value);
+            const caeActive = document.getElementById('enableCAE').checked;
 
             document.getElementById('lVal').innerText = L + "mm";
             document.getElementById('wVal').innerText = W + "mm";
             document.getElementById('rVal').innerText = R + "mm";
-            document.getElementById('mVal').innerText = M + "kg";
-            document.getElementById('vVal').innerText = V.toFixed(1) + " m/s";
+            document.getElementById('hoVal').innerText = Offset + "mm";
+            document.getElementById('mVal').innerText = M_kg + "kg";
+            document.getElementById('lxVal').innerText = offX + "mm";
+            document.getElementById('lzVal').innerText = offZ + "mm";
+            document.getElementById('offsetReadout').innerText = `${offX}, ${offZ}`;
 
-            const tDrill = document.getElementById('tDrill');
-            const totalMass = 25 + M + (tDrill && tDrill.checked ? 10 : 0);
-            const g = 9.81, mu = 0.12, eta = 0.85;
-            const torque = (totalMass * g * mu * (R/1000)) / (4 * eta);
-            const rpm = (V * 60) / (2 * Math.PI * (R/1000));
-            const power = torque * (2 * Math.PI * rpm / 60);
-            
-            const ratedTorque = 8.0; 
-            const fos = ratedTorque / torque;
+            // --- CAE CALCULATIONS ---
+            const ForceTotal = (25 + M_kg) * 9.81;
+            const a = L/2 + offZ;
+            const b = L/2 - offZ;
+            // Simplified Bending Moment for Off-Center Load
+            const maxMoment = (ForceTotal * (a/1000) * (b/1000)) / Math.max(0.1, L/1000);
+            const stressMPa = (maxMoment * 1000 * PROFILE_C) / PROFILE_I;
+            const cogHeight = R + Offset + 50; 
+            const stability = (W/2) / Math.max(1, cogHeight);
 
-            document.getElementById('tOut').innerText = torque.toFixed(2) + " Nm";
-            document.getElementById('rpmOut').innerText = rpm.toFixed(1) + " RPM";
-            document.getElementById('pOut').innerText = power.toFixed(1) + " W/Mot";
-            document.getElementById('pBar').style.width = Math.min((power/120)*100, 100) + "%";
-            
-            const fosScore = document.getElementById('fosScore');
-            const fosOut = document.getElementById('fosOut');
-            if (fosOut) fosOut.innerText = fos.toFixed(2);
-            if (fosScore) fosScore.innerText = fos.toFixed(1);
+            document.getElementById('stressDisplay').innerText = stressMPa.toFixed(2) + " MPa";
+            document.getElementById('stabilityDisplay').innerText = stability.toFixed(2);
+            document.getElementById('peakStressVal').innerText = stressMPa.toFixed(1) + " MPa";
+            document.getElementById('caeLegend').style.display = caeActive ? 'block' : 'none';
             
             const rib = document.getElementById('feasibilityRibbon');
-            if(fos < 1.0) {
-                rib.innerText = "FAILED";
+            if(stressMPa > AL_YIELD_STRENGTH || stability < 0.6) {
+                rib.innerText = stability < 0.6 ? "TIPPING RISK" : "YIELD FAILURE";
                 rib.className = "feasibility-ribbon bg-red-600 text-white";
-                if (fosScore) fosScore.style.color = "#dc2626";
-            } else if (fos < 1.5) {
-                rib.innerText = "CRITICAL";
+            } else if (stressMPa > 150) {
+                rib.innerText = "CAUTION";
                 rib.className = "feasibility-ribbon bg-amber-500 text-white";
-                if (fosScore) fosScore.style.color = "#d97706";
             } else {
-                rib.innerText = "FEASIBLE";
+                rib.innerText = "OPTIMIZED";
                 rib.className = "feasibility-ribbon bg-green-500 text-white";
-                if (fosScore) fosScore.style.color = "#15803d";
             }
 
-            document.getElementById('cutList').innerHTML = `
-                <div>&bull; 2040 Profile: 2x ${L}mm (Main)</div>
-                <div>&bull; 2040 Profile: 3x ${W}mm (Cross)</div>
-                <div>&bull; Drive Rods: 4x 120mm Stainless</div>
-                <div>&bull; Total Alloy Length: ${(L*2 + W*3)/1000}m</div>
-            `;
-
-            draw(L, W, R);
+            drawMachine(L, W, R, Offset, stressMPa, caeActive, offX, offZ);
         }
 
-        function draw(L, W, R) {
+        function drawMachine(L, W, R, Offset, stress, caeActive, offX, offZ) {
             if(!machine) return;
-            const prof = 40;
-            const h = R;
+            const prof = 40; 
+            const h_axle = R;
+            const h_chassis = R + Offset;
 
-            cLong1.scale.set(prof, prof, L);
-            cLong1.position.set(-W/2, h, 0);
-            cLong2.scale.set(prof, prof, L);
-            cLong2.position.set(W/2, h, 0);
-            
-            cCrossF.scale.set(W, prof, prof);
-            cCrossF.position.set(0, h, -L/2 + prof/2);
-            cCrossR.scale.set(W, prof, prof);
-            cCrossR.position.set(0, h, L/2 - prof/2);
-            cCrossM.scale.set(W, prof, prof);
-            cCrossM.position.set(0, h, 0);
+            [cLong1, cLong2, cLongCenter].forEach((m, idx) => {
+                const railX = idx === 0 ? -W/2 : (idx === 1 ? W/2 : 0);
+                m.scale.set(prof, prof, L);
+                m.position.set(railX, h_chassis, 0);
+                
+                if(caeActive) {
+                    m.material = new THREE.MeshBasicMaterial({vertexColors: true});
+                    const positions = m.geometry.attributes.position;
+                    const colors = [];
+                    const xFactor = Math.max(0.2, 1 - (Math.abs(railX - offX) / (W/2)));
 
-            tray.scale.set(W - 20, 1, L/2);
-            tray.position.set(0, h - prof/2, L/4);
+                    for(let i=0; i<positions.count; i++) {
+                        const zLocal = positions.getZ(i);
+                        const worldZ = zLocal * L;
+                        let zFactor = 0;
+                        if (worldZ <= offZ) zFactor = (worldZ + L/2) / Math.max(1, offZ + L/2);
+                        else zFactor = (L/2 - worldZ) / Math.max(1, L/2 - offZ);
+                        
+                        const localStress = stress * Math.max(0, zFactor) * xFactor;
+                        const c = getColorFromStress(localStress, stress);
+                        colors.push(c.r, c.g, c.b);
+                    }
+                    m.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                    m.geometry.attributes.color.needsUpdate = true;
+                } else {
+                    m.material = new THREE.MeshStandardMaterial({color: 0x2563eb, metalness: 0.6});
+                    if(m.geometry.attributes.color) m.geometry.deleteAttribute('color');
+                }
+            });
 
-            const gap = 120;
-            const wheelX = W/2 + gap;
-            const wheelZ = [-L/2 + 200, -L/2 + 200, L/2 - 200, L/2 - 200];
-            const sides = [-wheelX, wheelX, -wheelX, wheelX];
+            cCrossF.scale.set(W, prof, prof); cCrossF.position.set(0, h_chassis, -L/2 + prof/2);
+            cCrossR.scale.set(W, prof, prof); cCrossR.position.set(0, h_chassis, L/2 - prof/2);
+            cCrossM.scale.set(W, prof, prof); cCrossM.position.set(0, h_chassis, 0);
 
+            const shaftLen = 60;
             const tireWidth = 80;
-
-            wMesh.forEach((w, i) => {
-                w.scale.set(R, tireWidth, R); 
-                w.position.set(sides[i], R, wheelZ[i]);
+            const wheelX = W/2 + shaftLen; 
+            const wheelZ = [-L/2 + 200, -L/2 + 200, L/2 - 200, L/2 - 200];
+            
+            wheels.forEach((w, i) => {
+                w.scale.set(tireWidth, R, R);
+                w.position.set(i % 2 === 0 ? -wheelX : wheelX, h_axle, wheelZ[i]);
             });
 
-            wHubs.forEach((hub, i) => {
-                hub.scale.set(R * 0.4, tireWidth * 1.1, R * 0.4);
-                hub.position.set(sides[i], R, wheelZ[i]);
+            shaftMeshes.forEach((axle, i) => {
+                axle.scale.set(1, shaftLen, 1); 
+                const rX = i % 2 === 0 ? -(W/2 + shaftLen/2) : (W/2 + shaftLen/2);
+                axle.position.set(rX, (h_chassis + h_axle)/2, wheelZ[i]);
+                
+                axle.rotation.set(0, 0, 0); 
+                axle.rotation.z = Math.PI/2;
+                const angle = Math.atan2(Offset, shaftLen);
+                axle.rotation.y = i % 2 === 0 ? angle : -angle;
             });
 
-            const tRods = document.getElementById('tRods');
-            rMesh.forEach((r, i) => {
-                r.visible = tRods && tRods.checked;
-                r.scale.set(1, gap - 40, 1);
-                const sX = sides[i] < 0 ? -(W/2 + gap/2) : (W/2 + gap/2);
-                r.position.set(sX, R, wheelZ[i]);
+            motorBoxes.forEach((mBox, i) => {
+                mBox.position.set(i % 2 === 0 ? -W/2 : W/2, h_chassis, wheelZ[i]);
             });
 
-            mBox.forEach((m, i) => {
-                m.position.set(sides[i] < 0 ? -W/2 : W/2, R, wheelZ[i]);
+            pStand.visible = document.getElementById('tPhone').checked;
+            pStand.position.set(0, h_chassis + 300, -L/2 + 50);
+
+            drill.visible = document.getElementById('tDrill').checked;
+            drill.position.set(offX, h_chassis - 10, offZ);
+
+            forceArrows.forEach((a) => {
+                a.visible = caeActive;
+                a.position.set(offX, h_chassis + 300, offZ);
+                a.rotation.x = Math.PI;
             });
-
-            const tPhone = document.getElementById('tPhone');
-            pStand.visible = tPhone && tPhone.checked;
-            pStand.position.set(0, h + prof/2, -L/2 + prof/2);
-
-            const tDrill = document.getElementById('tDrill');
-            drill.visible = tDrill && tDrill.checked;
-            drill.position.set(0, h - 50, 0);
         }
 
         window.onload = () => {
             init();
-            ['lIn', 'wIn', 'rIn', 'mIn', 'vIn', 'tPhone', 'tDrill', 'tRods'].forEach(id => {
+            const controlIds = [
+                'lIn', 'wIn', 'rIn', 'hoIn', 'mIn', 'lxIn', 'lzIn', 
+                'enableCAE', 'tPhone', 'tDrill'
+            ];
+            controlIds.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.addEventListener('input', update);
+                if (el) el.addEventListener('input', updateAnalysis);
             });
-            update();
+            updateAnalysis();
         };
     </script>
 </body>
